@@ -47,8 +47,19 @@ body{min-height:100vh;display:flex;flex-direction:column;align-items:center;just
 const DESIGN = {
 
   /* --- Page --- */
-  background:       "#f0eeea",   // page background color
-  siteName:         "Daily",     // text in top-left corner
+  background:       "#f0eeea",   // page background color (used if no backgroundImage)
+
+  /* Set to a URL or relative path to use an image as the background.
+     Set to "" to use the plain background color instead.
+     Examples:
+       backgroundImage: "https://images.unsplash.com/photo-xxx?w=1200"
+       backgroundImage: "photos/bg.jpg"
+  */
+  backgroundImage:  "/Users/jean/FINAL_PROJECT_2025/redheartcute.jpg",
+  backgroundSize:   "cover",    // "cover" fills screen, "contain" fits inside, "auto"
+  backgroundPos:    "center",   // "center", "top", "bottom", "left", "right"
+  backgroundOverlay: "rgba(255,255,255,0.2)", // dark overlay on top of image, e.g. "rgba(0,0,0,0.4)"
+  siteName:         "everything i love about you",     // text in top-left corner
   showSiteName:     true,        // show/hide site name
   showDate:         true,        // show/hide the date top-right
 
@@ -101,40 +112,11 @@ const DESIGN = {
    ================================================================ */
 const entries = [
   {
-    image:   "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=900",
-    caption: "Stillness is not the absence of movement.",
-    label:   "Nature"
+    image:   "/Users/jean/FINAL_PROJECT_2025/teeth.JPG",
+    caption: "i love your absolute cutest teeth.",
+    label:   "2-14-2026"
   },
-  {
-    image:   "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?w=900",
-    caption: "Every wildflower is a small act of defiance.",
-    label:   "Field"
-  },
-  {
-    image:   "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=900",
-    caption: "Walk slowly enough to notice what the hurried world misses.",
-    label:   "Wander"
-  },
-  {
-    image:   "https://images.unsplash.com/photo-1519125323398-675f0ddb6308?w=900",
-    caption: "Light doesn't ask permission before entering a room.",
-    label:   "Morning"
-  },
-  {
-    image:   "https://images.unsplash.com/photo-1444723121867-7a241cacace9?w=900",
-    caption: "Cities are just forests rearranged by ambition.",
-    label:   "Urban"
-  },
-  {
-    image:   "https://images.unsplash.com/photo-1490750967868-88df5691cc27?w=900",
-    caption: "Bloom not for applause — bloom because that's what you do.",
-    label:   "Bloom"
-  },
-  {
-    image:   "https://images.unsplash.com/photo-1462275646964-a0e3386b89fa?w=900",
-    caption: "The fog doesn't hide the mountain. It reminds you it's still there.",
-    label:   "Vista"
-  },
+
 ];
 /* ================================================================
    (nothing below needs to be changed)
@@ -142,7 +124,21 @@ const entries = [
 
 /* Apply design */
 const d = DESIGN;
-document.body.style.background    = d.background;
+if (d.backgroundImage) {
+  document.body.style.backgroundImage    = `url('${d.backgroundImage}')`;
+  document.body.style.backgroundSize     = d.backgroundSize;
+  document.body.style.backgroundPosition = d.backgroundPos;
+  document.body.style.backgroundRepeat   = 'no-repeat';
+  document.body.style.backgroundAttachment = 'fixed';
+  if (d.backgroundOverlay && d.backgroundOverlay !== 'rgba(0,0,0,0.0)') {
+    const ov = document.createElement('div');
+    ov.style.cssText = `position:fixed;inset:0;background:${d.backgroundOverlay};pointer-events:none;z-index:0;`;
+    document.body.prepend(ov);
+    document.body.style.position = 'relative';
+  }
+} else {
+  document.body.style.background = d.background;
+}
 document.body.style.fontFamily    = `'${d.fontBody}', sans-serif`;
 
 document.querySelector('.card').style.maxWidth = d.cardMaxWidth;
