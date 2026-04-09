@@ -3,214 +3,721 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Daily</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&family=Space+Grotesk:wght@400;600&family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;600;800&family=Unbounded:wght@400;700&family=Outfit:wght@300;400;700&display=swap" rel="stylesheet"/>
+
+<!-- ============================================================
+  FONTS
+  Change the font names below to any Google Font you like.
+  Browse fonts at: https://fonts.google.com
+  Example: "Playfair Display", "Bebas Neue", "Inter", "Lora"
+  Both headingFont and bodyFont can be the same or different.
+============================================================ -->
+<link id="gfont" rel="stylesheet" href=""/>
+
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem 1.2rem;transition:background .2s;}
-.topbar{width:100%;max-width:440px;display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;}
-.card{width:100%;max-width:440px;overflow:hidden;}
-.img-wrap{position:relative;width:100%;overflow:hidden;}
-.img-wrap img{width:100%;height:100%;object-fit:cover;display:block;transition:transform 6s ease;}
-.img-wrap:hover img{transform:scale(1.04);}
-.tag{position:absolute;top:12px;left:12px;font-size:0.62rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:5px 11px;}
-.card-body{padding:1.1rem 0.1rem 0;}
-.caption{line-height:1.35;margin-bottom:0.7rem;}
-.meta-date{letter-spacing:0.03em;}
-@keyframes rise{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
-.card{animation:rise .5s cubic-bezier(.22,1,.36,1) both;}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; }
+
+body {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  /* ── PAGE BACKGROUND ──────────────────────────────────────────
+     The background image is now controlled entirely from
+     DESIGN.pageImage in the JS section below.
+     DO NOT set background-image here — use DESIGN instead.
+     For a solid color fallback, change DESIGN.pageBg.
+  ──────────────────────────────────────────────────────────────*/
+
+  padding: max(1.5rem, env(safe-area-inset-top)) 1.25rem max(1.5rem, env(safe-area-inset-bottom));
+  overflow: hidden;
+  position: relative;
+}
+
+/* ── SCENE WRAPPER ──────────────────────────────────────────────
+   max-width controls how wide everything gets on large screens.
+   On iPhone the card will naturally be smaller (see card section).
+──────────────────────────────────────────────────────────────── */
+.scene {
+  width: 100%;
+  max-width: var(--card-width, 340px); /* ← CHANGE: max width on desktop */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ── TOP BAR ────────────────────────────────────────────────────
+   Site name sits top-left, date sits top-right.
+   On all screen sizes they stay pinned to their corners.
+──────────────────────────────────────────────────────────────── */
+.topbar {
+  width: 100%;
+  display: flex;
+  justify-content: space-between; /* left + right pinned */
+  align-items: center;
+  margin-bottom: 1.4rem;
+}
+
+.site-name {
+  /* ── SITE NAME FONT + SIZE ──────────────────────────────────
+     font-family set by JS from DESIGN.headingFont below.
+     Change the size here or in DESIGN.siteNameSize          */
+  letter-spacing: 0.04em;
+  text-align: left;  /* stays left */
+}
+
+.top-date {
+  /* ── DATE FONT + SIZE ───────────────────────────────────────
+     font-family set by JS from DESIGN.bodyFont below.
+     Change opacity for how faint it looks (0 = invisible)   */
+  opacity: 0.45;
+  letter-spacing: 0.06em;
+  text-align: right; /* stays right */
+}
+
+/* ── ANIM STAGE (pokeball + hint) ───────────────────────────── */
+.anim-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.4rem;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+.anim-stage.out {
+  opacity: 0;
+  transform: scale(0.88);
+  pointer-events: none;
+}
+
+/* ── POKÉBALL ───────────────────────────────────────────────────
+   All pokéball colors and sizes live in DESIGN below.
+   The CSS vars are set by JS — don't edit the var() calls here,
+   edit the values in the DESIGN object instead.
+──────────────────────────────────────────────────────────────── */
+.pokeball {
+  width: var(--ball-size, 140px);
+  height: var(--ball-size, 140px);
+  border-radius: 50%;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  /* CHANGE ball outline → DESIGN.ballBorderColor */
+  border: var(--ball-border-width, 3px) solid var(--ball-border-color, #403631);
+  animation: float 3s ease-in-out infinite;
+  transition: transform 0.1s;
+}
+.pokeball:active { transform: scale(0.93) !important; animation: none; }
+
+/* CHANGE top half color → DESIGN.ballTop */
+.pokeball .top    { position:absolute; top:0; left:0; width:100%; height:50%; background:var(--ball-top,#e63946); }
+/* CHANGE bottom half color → DESIGN.ballBottom */
+.pokeball .bottom { position:absolute; bottom:0; left:0; width:100%; height:50%; background:var(--ball-bottom,#f0ede8); }
+/* The center band uses the same color as the outline → DESIGN.ballBorderColor */
+.pokeball .band   { position:absolute; top:50%; left:0; transform:translateY(-50%); width:100%; height:var(--ball-band-height,10px); background:var(--ball-border-color,#403631); }
+/* Center button — white fill, outlined with border color */
+.pokeball .btn    { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:var(--ball-btn-size,32px); height:var(--ball-btn-size,32px); border-radius:50%; background:#ffffff; border:var(--ball-border-width,3px) solid var(--ball-border-color,#403631); z-index:2; }
+.pokeball .btn::after { content:''; position:absolute; inset:5px; border-radius:50%; background:#ebebeb; }
+
+@keyframes float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-8px);} }
+
+/* ── TAP HINT TEXT ──────────────────────────────────────────────
+   CHANGE the hint text → DESIGN.tapHint
+   CHANGE the size → DESIGN.tapHintSize
+──────────────────────────────────────────────────────────────── */
+.tap-hint {
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.35;
+  animation: blink 2s ease infinite;
+}
+@keyframes blink { 0%,100%{opacity:0.35;} 50%{opacity:0.1;} }
+
+/* ── FLASH (white burst on tap) ─────────────────────────────── */
+.flash { position:fixed; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:100; transition:opacity 0.08s; }
+.flash.go { opacity:0.8; }
+
+/* ── CARD FLIP WRAPPER ──────────────────────────────────────────
+   perspective controls how "deep" the 3D flip looks.
+   Higher = flatter flip. Lower = more dramatic.
+   CHANGE: perspective value below
+──────────────────────────────────────────────────────────────── */
+.card-flip {
+  width: 100%;
+  perspective: 900px;  /* ← CHANGE: 3D depth of flip (600–1400px range) */
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.card-flip.visible {
+  opacity: 1;
+  pointer-events: auto;
+  position: relative;
+}
+.card-inner {
+  width: 100%;
+  transform-style: preserve-3d;
+  transform: rotateY(180deg);
+}
+
+/* ── POKÉMON CARD FACE ──────────────────────────────────────────
+   The main card that shows after the flip.
+
+   CHANGE card border color → DESIGN.cardBorderOuter
+   CHANGE inner ring color  → DESIGN.cardBorderInner (set width 0 to hide)
+   CHANGE card background   → DESIGN.cardBg
+   CHANGE corner rounding   → DESIGN.cardRadius
+──────────────────────────────────────────────────────────────── */
+.card-face {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  width: 100%;
+  border-radius: var(--card-radius, 16px);
+
+  /* ── CARD BACKGROUND COLOR ──────────────────────────────────
+     Currently set to warm white. To change → edit DESIGN.cardBg
+     White shades to try:
+       Pure white:       #ffffff
+       Warm white:       #fdf8f2   ← current
+       Cool white:       #f8f9ff
+       Cream:            #fef9ee
+       Very light gray:  #f5f5f5
+  ──────────────────────────────────────────────────────────────*/
+  background: var(--card-bg, #fdf8f2);
+
+  /* outer gold border */
+  border: var(--card-border-outer-width, 3px) solid var(--card-border-outer, #d4af37);
+  /* inner dark ring (inset box-shadow trick) */
+  box-shadow: inset 0 0 0 var(--card-border-inner-width, 2px) var(--card-border-inner, #7a5c00);
+  overflow: hidden;
+  position: relative;
+}
+
+/* subtle scanline texture on card face */
+.card-face::after {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.012) 2px,
+    rgba(0,0,0,0.012) 4px
+  );
+  pointer-events: none;
+  z-index: 3;
+  border-radius: var(--card-radius, 16px);
+}
+
+/* ── CARD HEADER ────────────────────────────────────────────────
+   Left: card name. Right: HP value.
+   CHANGE name text  → DESIGN.cardName
+   CHANGE HP text    → DESIGN.hpValue  (or hide → DESIGN.showHp)
+   CHANGE name color → DESIGN.cardBorderOuter (shares gold color)
+──────────────────────────────────────────────────────────────── */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.85rem 0.35rem;
+  border-bottom: 1px solid rgba(0,0,0,0.08); /* ← CHANGE: header divider opacity */
+}
+.card-name { letter-spacing:0.05em; color:var(--card-border-outer,#d4af37); }
+.card-hp   { letter-spacing:0.06em; opacity:0.45; }
+
+/* ── CARD IMAGE ─────────────────────────────────────────────────
+   CHANGE aspect ratio → DESIGN.imageRatio
+   "4/3" landscape | "1/1" square | "3/4" portrait | "16/9" wide
+──────────────────────────────────────────────────────────────── */
+.card-image-wrap {
+  margin: 0.45rem 0.65rem;
+  border-radius: calc(var(--card-radius,16px) - 5px);
+  overflow: hidden;
+  position: relative;
+  aspect-ratio: var(--img-ratio, 4/3);
+  border: 2px solid var(--card-border-outer, #d4af37); /* ← image inner border, same gold */
+}
+.card-image-wrap img { width:100%; height:100%; object-fit:cover; display:block; }
+
+/* ── TAG BADGE ──────────────────────────────────────────────────
+   Pill in the top-right of the image.
+   CHANGE bg/color → DESIGN.tagBg / DESIGN.tagColor
+   HIDE entirely   → DESIGN.showTag: false
+──────────────────────────────────────────────────────────────── */
+.card-tag {
+  position: absolute;
+  top: 9px; right: 9px;
+  font-size: var(--tag-size, 0.56rem);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--tag-bg, rgba(0,0,0,0.5));
+  color: var(--tag-color, #fff);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 2;
+}
+
+/* ── CARD BODY ──────────────────────────────────────────────────
+   Caption text and footer (date + card number).
+   CHANGE caption size  → DESIGN.captionSize
+──────────────────────────────────────────────────────────────── */
+.card-body { padding: 0.55rem 0.85rem 0.85rem; }
+.card-divider { width:100%; height:1px; background:rgba(0,0,0,0.08); margin-bottom:0.55rem; }
+
+.card-caption {
+  line-height: 1.55;
+  margin-bottom: 0.5rem;
+  color: var(--card-text, #1a1a1a); /* ← CHANGE: caption text color */
+}
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--card-text-muted, #888); /* ← CHANGE: date + card number color */
+  letter-spacing: 0.05em;
+}
+
+/* ── CARD BACK ──────────────────────────────────────────────────
+   Shows during the flip before the front is revealed.
+   CHANGE back image → DESIGN.cardBackImage
+   If no image is set, falls back to the crosshatch pattern.
+──────────────────────────────────────────────────────────────── */
+.card-back {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--card-radius, 16px);
+  transform: rotateY(180deg);
+  border: var(--card-border-outer-width, 3px) solid var(--card-border-outer, #d4af37);
+  box-shadow: inset 0 0 0 var(--card-border-inner-width, 2px) var(--card-border-inner, #7a5c00);
+  overflow: hidden;
+}
+.card-back-img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;         /* ← CHANGE to "contain" if you don't want cropping */
+  object-position: center;   /* ← CHANGE: "top" / "bottom" / "center" */
+  display: block;
+}
+.card-back-pattern {
+  position: absolute; inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--card-bg, #fdf8f2);
+}
+.card-back-pattern-inner {
+  width: calc(100% - 20px);
+  height: calc(100% - 20px);
+  border-radius: calc(var(--card-radius,16px) - 4px);
+  border: 1px solid rgba(212,175,55,0.3);
+  background-image:
+    repeating-linear-gradient(45deg,  rgba(212,175,55,0.07) 0px, rgba(212,175,55,0.07) 1px, transparent 1px, transparent 12px),
+    repeating-linear-gradient(-45deg, rgba(212,175,55,0.07) 0px, rgba(212,175,55,0.07) 1px, transparent 1px, transparent 12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.card-back-logo {
+  font-size: 1.4rem;  /* ← CHANGE: back logo size */
+  opacity: 0.18;
+  letter-spacing: 0.12em;
+  color: var(--card-border-outer, #d4af37);
+}
 </style>
 </head>
 <body>
 
-<div class="topbar">
-  <span id="site-name"></span>
-  <span id="short-date"></span>
-</div>
+<div class="flash" id="flash"></div>
 
-<div class="card">
-  <div class="img-wrap" id="img-wrap">
-    <img id="img" src="" alt=""/>
-    <span class="tag" id="tag"></span>
+<div class="scene">
+  <div class="topbar">
+    <span class="site-name" id="site-name"></span>
+    <span class="top-date"  id="short-date"></span>
   </div>
-  <div class="card-body">
-    <p class="caption" id="caption"></p>
-    <span class="meta-date" id="long-date"></span>
+
+  <div class="anim-stage" id="anim-stage">
+    <div class="pokeball" id="pokeball">
+      <div class="top"></div>
+      <div class="bottom"></div>
+      <div class="band"></div>
+      <div class="btn"></div>
+    </div>
+    <span class="tap-hint" id="tap-hint"></span>
+  </div>
+
+  <div class="card-flip" id="card-flip">
+    <div class="card-inner" id="card-inner">
+
+      <!-- FRONT FACE -->
+      <div class="card-face">
+        <div class="card-header">
+          <span class="card-name" id="card-name"></span>
+          <span class="card-hp"   id="card-hp"></span>
+        </div>
+        <div class="card-image-wrap">
+          <img id="card-img" src="" alt=""/>
+          <span class="card-tag" id="card-tag"></span>
+        </div>
+        <div class="card-body">
+          <div class="card-divider"></div>
+          <p class="card-caption" id="card-caption"></p>
+          <div class="card-footer">
+            <span id="long-date"></span>
+            <span id="card-number"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- BACK FACE -->
+      <div class="card-back" id="card-back">
+        <img class="card-back-img" id="card-back-img" src="" alt="" style="display:none;"/>
+        <div class="card-back-pattern" id="card-back-pattern">
+          <div class="card-back-pattern-inner">
+            <span class="card-back-logo" id="back-logo"></span>
+          </div>
+        </div>
+      </div>
+
+    </div>
   </div>
 </div>
 
 <script>
-/* ================================================================
-   🎨  YOUR DESIGN SETTINGS — edit anything here
-   ================================================================ */
+/* ====================================================================
+   🎨  DESIGN SETTINGS
+   Everything you'd want to customize lives here.
+==================================================================== */
 const DESIGN = {
 
-  /* --- Page --- */
-  background:       "#f0eeea",   // page background color (used if no backgroundImage)
+  /* ── PAGE BACKGROUND ───────────────────────────────────────────
+     pageBg: solid color shown if no image is set.
+     pageImage: filename of your background image.
+       *** The image file must be in the SAME folder as index.html ***
+       Just use the filename, e.g. "grass.jpg" — no folder path needed.
+       Leave "" to use pageBg solid color instead.
+     pageImageSize: "cover" fills screen | "contain" fits inside
+     pageImagePosition: "center" | "top" | "bottom" | "top left" etc.
+  ──────────────────────────────────────────────────────────────── */
+  pageBg:             "#0f0f14",       // ← CHANGE: fallback solid color
+  pageImage:          "grass.jpg",     // ← CHANGE: your background image filename
+  pageImageSize:      "cover",         // ← CHANGE: cover / contain / auto
+  pageImagePosition:  "center",        // ← CHANGE: center / top / bottom
 
-  /* Set to a URL or relative path to use an image as the background.
-     Set to "" to use the plain background color instead.
-     Examples:
-       backgroundImage: "https://images.unsplash.com/photo-xxx?w=1200"
-       backgroundImage: "photos/bg.jpg"
-  */
-  backgroundImage:  "redheartcute.jpg",
-  backgroundSize:   "cover",    // "cover" fills screen, "contain" fits inside, "auto"
-  backgroundPos:    "center",   // "center", "top", "bottom", "left", "right"
-  backgroundOverlay: "rgba(255,255,255,0.2)", // dark overlay on top of image, e.g. "rgba(0,0,0,0.4)"
-  siteName:         "everything i love about you",     // text in top-left corner
-  showSiteName:     true,        // show/hide site name
-  showDate:         true,        // show/hide the date top-right
+  /* ── FONTS ─────────────────────────────────────────────────────
+     Any name from https://fonts.google.com works here.
+     headingFont: used for site name, card name, caption, tag pill
+     bodyFont:    used for date, tap hint, HP, card number, footer
+     headingWeight: "400" normal | "500" medium | "600" semi | "700" bold
+     bodyWeight:    same options
+     Popular choices:
+       Serif:      "Playfair Display", "Lora", "Cormorant Garamond"
+       Sans:       "Inter", "DM Sans", "Outfit", "Nunito"
+       Display:    "Bebas Neue", "Righteous", "Cinzel"
+       Mono:       "Space Mono", "DM Mono"
+  ──────────────────────────────────────────────────────────────── */
+  headingFont:        "DM Sans",       // ← CHANGE: heading / display font
+  bodyFont:           "DM Sans",       // ← CHANGE: body / UI font
+  headingWeight:      "600",           // ← CHANGE: heading weight
+  bodyWeight:         "400",           // ← CHANGE: body weight
 
-  /* --- Card --- */
-  cardBackground:   "transparent", // behind the text area (hex or "transparent")
-  cardRadius:       "20px",      // corner roundness of the whole card
-  imageAspectRatio: "1/1",       // "1/1" = square, "4/3", "16/9", "3/4" = portrait
-  imageRadius:      "16px",      // corner roundness of the image
+  /* ── TEXT SIZES ────────────────────────────────────────────────
+     All in rem. 1rem = 16px by default.
+     0.7rem ≈ 11px | 0.85rem ≈ 14px | 1rem = 16px | 1.2rem ≈ 19px
+  ──────────────────────────────────────────────────────────────── */
+  siteNameSize:       "0.72rem",       // ← CHANGE: top-left site name size
+  captionSize:        "0.88rem",       // ← CHANGE: card caption text size
+  dateSize:           "0.6rem",        // ← CHANGE: date + footer text size
+  tapHintSize:        "0.56rem",       // ← CHANGE: "tap to reveal" size
+  tagSize:            "0.54rem",       // ← CHANGE: tag pill text size
+  cardNameSize:       "0.58rem",       // ← CHANGE: card header name size
+  cardHpSize:         "0.56rem",       // ← CHANGE: HP text size
 
-  /* --- Tag badge --- */
-  showTag:          true,
-  tagBackground:    "#111111",
-  tagColor:         "#ffffff",
-  tagRadius:        "100px",     // pill = "100px", square = "6px"
+  /* ── GLOBAL TEXT COLOR ─────────────────────────────────────────
+     Color for site name, date, tap hint (the text on the bg image).
+  ──────────────────────────────────────────────────────────────── */
+  textColor:          "#f0ede8",       // ← CHANGE: text color on background
 
-  /* --- Caption text --- */
-  captionSize:      "1.25rem",   // e.g. "1.1rem", "1.4rem", "clamp(1rem,5vw,1.4rem)"
-  captionWeight:    "700",       // "400" light, "600" medium, "700" bold
-  captionColor:     "#111010",
-  captionAlign:     "left",      // "left", "center", "right"
-  captionStyle:     "normal",    // "normal" or "italic"
+  /* ── CARD TEXT COLORS ──────────────────────────────────────────
+     Separate because the card has a white background.
+  ──────────────────────────────────────────────────────────────── */
+  cardTextColor:      "#1a1a1a",       // ← CHANGE: caption text color on card
+  cardTextMuted:      "#888888",       // ← CHANGE: date + card number color
 
-  /* --- Date line --- */
-  dateSize:         "0.68rem",
-  dateColor:        "#999999",
-  dateAlign:        "left",
+  /* ── SITE NAME + HINT ──────────────────────────────────────────*/
+  siteName:           "Daily",         // ← CHANGE: your site name (top left)
+  tapHint:            "tap to reveal", // ← CHANGE: hint below pokéball
 
-  /* --- Site name (top-left) --- */
-  siteNameSize:     "1rem",
-  siteNameWeight:   "700",
-  siteNameColor:    "#111010",
+  /* ── POKÉBALL ──────────────────────────────────────────────────
+     ballSize:        diameter in px
+     ballTop:         top half color
+     ballBottom:      bottom half color
+     ballBorderColor: outline ring + center band + button ring (brown)
+     ballBorderWidth: thickness of outline in px
+     ballBandHeight:  height of center seam stripe in px
+     ballBtnSize:     diameter of center button in px
+  ──────────────────────────────────────────────────────────────── */
+  ballSize:           140,             // ← CHANGE: pokéball diameter (px)
+  ballTop:            "#e63946",       // ← CHANGE: top half color
+  ballBottom:         "#f0ede8",       // ← CHANGE: bottom half color
+  ballBorderColor:    "#403631",       // ← CHANGE: outline + seam + btn ring
+  ballBorderWidth:    3,               // ← CHANGE: outline thickness (px)
+  ballBandHeight:     10,              // ← CHANGE: center seam height (px)
+  ballBtnSize:        32,              // ← CHANGE: center button size (px)
 
-  /* --- Font ---
-       Options: 'Syne', 'DM Sans', 'Space Grotesk', 'Outfit',
-                'Plus Jakarta Sans', 'Unbounded', 'Instrument Serif'
-  ----------------------------------------------------------- */
-  fontHeading:      "Syne",         // used for site name + caption
-  fontBody:         "DM Sans",      // used for tag + date
+  /* ── CARD SIZE ─────────────────────────────────────────────────
+     maxWidth:   max card width in px
+     cardScale:  how much smaller on mobile (0.82 = 82% of maxWidth)
+                 Lower = smaller on iPhone. Try 0.75–0.95.
+  ──────────────────────────────────────────────────────────────── */
+  maxWidth:           360,             // ← CHANGE: max card width (px)
+  cardScale:          0.82,            // ← CHANGE: mobile size (0.75–0.95)
 
-  /* --- Spacing --- */
-  cardMaxWidth:     "440px",     // max card width
-  captionTopPad:    "1.1rem",    // gap between image and caption
+  /* ── CARD BACKGROUND ───────────────────────────────────────────
+     White shades to try:
+       Pure white:      "#ffffff"
+       Warm white:      "#fdf8f2"   ← current
+       Cool white:      "#f8f9ff"
+       Cream:           "#fef9ee"
+       Light gray:      "#f5f5f5"
+  ──────────────────────────────────────────────────────────────── */
+  cardBg:             "#fdf8f2",       // ← CHANGE: card background color
+
+  /* ── CARD BORDER ───────────────────────────────────────────────
+     cardBorderOuter:      main visible ring color
+     cardBorderOuterWidth: thickness in px
+     cardBorderInner:      inset inner ring color
+     cardBorderInnerWidth: set to 0 to remove inner ring entirely
+  ──────────────────────────────────────────────────────────────── */
+  cardBorderOuter:        "#d4af37",   // ← CHANGE: outer border color (gold)
+  cardBorderOuterWidth:   3,           // ← CHANGE: outer border thickness (px)
+  cardBorderInner:        "#7a5c00",   // ← CHANGE: inner ring color
+  cardBorderInnerWidth:   2,           // ← CHANGE: inner ring width (0 = off)
+
+  /* ── CARD CORNER RADIUS ────────────────────────────────────────*/
+  cardRadius:         16,              // ← CHANGE: card corner rounding (px)
+
+  /* ── CARD IMAGE ────────────────────────────────────────────────
+     "4/3" landscape | "1/1" square | "3/4" portrait | "16/9" wide
+  ──────────────────────────────────────────────────────────────── */
+  imageRatio:         "4/3",           // ← CHANGE: photo aspect ratio
+
+  /* ── CARD HEADER ───────────────────────────────────────────────
+     cardName: text shown top-left of card (gold color)
+     showHp:   show HP value top-right of card
+     hpValue:  the HP string displayed
+  ──────────────────────────────────────────────────────────────── */
+  cardName:           "Daily",         // ← CHANGE: card header left text
+  showHp:             true,            // ← CHANGE: true = show, false = hide
+  hpValue:            "HP 80",         // ← CHANGE: HP string on card
+
+  /* ── CARD NUMBER ───────────────────────────────────────────────
+     Shows "No. 042 / 365" in card footer, auto-calculated from date.
+  ──────────────────────────────────────────────────────────────── */
+  showCardNumber:     true,            // ← CHANGE: true = show, false = hide
+
+  /* ── CARD BACK IMAGE ───────────────────────────────────────────
+     *** File must be in the SAME folder as index.html ***
+     Example: cardBackImage: "card-back.jpg"
+     Leave "" to use the default gold crosshatch pattern.
+  ──────────────────────────────────────────────────────────────── */
+  cardBackImage:      "",              // ← CHANGE: "card-back.jpg" or URL
+
+  /* ── CARD BACK LOGO ────────────────────────────────────────────
+     Only visible when cardBackImage is "" (no image set).
+  ──────────────────────────────────────────────────────────────── */
+  backLogoText:       "DAILY",         // ← CHANGE: text on card back pattern
+
+  /* ── TAG BADGE ─────────────────────────────────────────────────
+     showTag:  true = show label pill on image | false = always hide
+     tagBg:    pill background — rgba supports transparency
+     tagColor: pill text color
+  ──────────────────────────────────────────────────────────────── */
+  showTag:            true,            // ← CHANGE: show/hide tag pill
+  tagBg:              "rgba(0,0,0,0.5)", // ← CHANGE: tag background
+  tagColor:           "#ffffff",       // ← CHANGE: tag text color
 };
-/* ================================================================
-   ✏️  YOUR ENTRIES — add images + captions here
-   ================================================================
-   image   → relative path like "photos/sunset.jpg" OR a full URL
-   caption → text shown below the image
-   label   → small badge on the image (leave "" to hide)
-   ================================================================ */
+
+/* ====================================================================
+   ✏️  YOUR ENTRIES
+   Add your 365 images + captions here.
+   image:   filename (e.g. "images/day001.jpg") or full URL
+   caption: text shown on the card below the photo
+   label:   tag pill text — leave "" to hide the pill for that entry
+==================================================================== */
 const entries = [
-  {
-    image:   "teeth.JPG",
-    caption: "i love your absolute cutest teeth.",
-    label:   "2-14-2026"
-  },
-  {
-    image:   "teeth.JPG",
-    caption: "i love thougthfulness.",
-    label:   "2-14-2026"
-  },
-  {
-    image:   "teeth.JPG",
-    caption: "i love .",
-    label:   "2-14-2026"
-  },
-  
-
+  { image:"https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=900", caption:"Stillness is not the absence of movement.", label:"Nature" },
+  { image:"https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?w=900", caption:"Every wildflower is a small act of defiance.", label:"Field" },
+  { image:"https://images.unsplash.com/photo-1519125323398-675f0ddb6308?w=900", caption:"Light doesn't ask permission before entering a room.", label:"Morning" },
+  { image:"https://images.unsplash.com/photo-1444723121867-7a241cacace9?w=900", caption:"Cities are just forests rearranged by ambition.", label:"Urban" },
+  { image:"https://images.unsplash.com/photo-1490750967868-88df5691cc27?w=900", caption:"Bloom not for applause — bloom because that's what you do.", label:"Bloom" },
+  { image:"https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=900", caption:"Walk slowly enough to notice what the hurried world misses.", label:"Wander" },
+  { image:"https://images.unsplash.com/photo-1462275646964-a0e3386b89fa?w=900", caption:"The fog doesn't hide the mountain. It reminds you it's still there.", label:"Vista" },
 ];
-/* ================================================================
-   (nothing below needs to be changed)
-   ================================================================ */
 
-/* Apply design */
-const d = DESIGN;
-if (d.backgroundImage) {
-  document.body.style.backgroundImage    = `url('${d.backgroundImage}')`;
-  document.body.style.backgroundSize     = d.backgroundSize;
-  document.body.style.backgroundPosition = d.backgroundPos;
+/* ====================================================================
+   ENGINE — no need to edit below this line
+==================================================================== */
+const D = DESIGN;
+const R = document.documentElement;
+
+/* Load Google Fonts */
+const fonts = [...new Set([D.headingFont, D.bodyFont])];
+document.getElementById('gfont').href =
+  `https://fonts.googleapis.com/css2?${fonts.map(f=>`family=${encodeURIComponent(f)}:wght@400;500;600;700`).join('&')}&display=swap`;
+
+/* CSS variables */
+R.style.setProperty('--ball-size',               D.ballSize + 'px');
+R.style.setProperty('--ball-top',                D.ballTop);
+R.style.setProperty('--ball-bottom',             D.ballBottom);
+R.style.setProperty('--ball-border-color',       D.ballBorderColor);
+R.style.setProperty('--ball-border-width',       D.ballBorderWidth + 'px');
+R.style.setProperty('--ball-band-height',        D.ballBandHeight + 'px');
+R.style.setProperty('--ball-btn-size',           D.ballBtnSize + 'px');
+R.style.setProperty('--card-width',              D.maxWidth + 'px');
+R.style.setProperty('--card-border-outer',       D.cardBorderOuter);
+R.style.setProperty('--card-border-outer-width', D.cardBorderOuterWidth + 'px');
+R.style.setProperty('--card-border-inner',       D.cardBorderInner);
+R.style.setProperty('--card-border-inner-width', D.cardBorderInnerWidth + 'px');
+R.style.setProperty('--card-radius',             D.cardRadius + 'px');
+R.style.setProperty('--card-bg',                 D.cardBg);
+R.style.setProperty('--card-text',               D.cardTextColor);
+R.style.setProperty('--card-text-muted',         D.cardTextMuted);
+R.style.setProperty('--img-ratio',               D.imageRatio);
+R.style.setProperty('--tag-bg',                  D.tagBg);
+R.style.setProperty('--tag-color',               D.tagColor);
+R.style.setProperty('--tag-size',                D.tagSize);
+
+/* Page background — set entirely from DESIGN, not from CSS */
+document.body.style.background = D.pageBg;
+document.body.style.color      = D.textColor;
+if (D.pageImage) {
+  document.body.style.backgroundImage    = `url('${D.pageImage}')`;
+  document.body.style.backgroundSize     = D.pageImageSize;
+  document.body.style.backgroundPosition = D.pageImagePosition;
   document.body.style.backgroundRepeat   = 'no-repeat';
-  document.body.style.backgroundAttachment = 'fixed';
-  if (d.backgroundOverlay && d.backgroundOverlay !== 'rgba(0,0,0,0.0)') {
-    const ov = document.createElement('div');
-    ov.style.cssText = `position:fixed;inset:0;background:${d.backgroundOverlay};pointer-events:none;z-index:0;`;
-    document.body.prepend(ov);
-    document.body.style.position = 'relative';
-  }
-} else {
-  document.body.style.background = d.background;
 }
-document.body.style.fontFamily    = `'${d.fontBody}', sans-serif`;
 
-document.querySelector('.card').style.maxWidth = d.cardMaxWidth;
-document.querySelector('.topbar').style.maxWidth = d.cardMaxWidth;
+/* Mobile card scaling */
+const mobileMaxWidth = Math.round(D.maxWidth * D.cardScale);
+const styleTag = document.createElement('style');
+styleTag.textContent = `
+  @media (max-width: 480px) {
+    .scene { max-width: ${mobileMaxWidth}px; }
+  }
+`;
+document.head.appendChild(styleTag);
 
-const imgWrap = document.getElementById('img-wrap');
-imgWrap.style.aspectRatio  = d.imageAspectRatio;
-imgWrap.style.borderRadius = d.imageRadius;
+/* Font helper */
+const hFont = `'${D.headingFont}', sans-serif`;
+const bFont = `'${D.bodyFont}', sans-serif`;
+document.body.style.fontFamily = bFont;
 
-document.querySelector('.card-body').style.background    = d.cardBackground;
-document.querySelector('.card-body').style.paddingTop    = d.captionTopPad;
+function styled(id, font, size, weight) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.fontFamily = font;
+  if (size)   el.style.fontSize   = size;
+  if (weight) el.style.fontWeight = weight;
+}
 
-const capEl = document.getElementById('caption');
-capEl.style.fontSize   = d.captionSize;
-capEl.style.fontWeight = d.captionWeight;
-capEl.style.color      = d.captionColor;
-capEl.style.textAlign  = d.captionAlign;
-capEl.style.fontStyle  = d.captionStyle;
-capEl.style.fontFamily = `'${d.fontHeading}', sans-serif`;
+styled('site-name',    hFont, D.siteNameSize,  D.headingWeight);
+styled('short-date',   bFont, D.dateSize,      D.bodyWeight);
+styled('tap-hint',     bFont, D.tapHintSize,   D.bodyWeight);
+styled('card-name',    hFont, D.cardNameSize,  D.headingWeight);
+styled('card-hp',      bFont, D.cardHpSize,    D.bodyWeight);
+styled('card-caption', hFont, D.captionSize,   D.headingWeight);
+styled('long-date',    bFont, D.dateSize,      D.bodyWeight);
+styled('card-number',  bFont, D.dateSize,      D.bodyWeight);
+styled('card-tag',     hFont, D.tagSize,       D.headingWeight);
+styled('back-logo',    hFont, null,            D.headingWeight);
 
-const dateEl = document.getElementById('long-date');
-dateEl.style.fontSize  = d.dateSize;
-dateEl.style.color     = d.dateColor;
-dateEl.style.display   = 'block';
-dateEl.style.textAlign = d.dateAlign;
+/* Static text */
+document.getElementById('site-name').textContent = D.siteName;
+document.getElementById('tap-hint').textContent  = D.tapHint;
+document.getElementById('card-name').textContent = D.cardName;
+document.getElementById('card-hp').textContent   = D.showHp ? D.hpValue : '';
+document.getElementById('back-logo').textContent = D.backLogoText;
 
-const nameEl = document.getElementById('site-name');
-nameEl.style.fontFamily = `'${d.fontHeading}', sans-serif`;
-nameEl.style.fontSize   = d.siteNameSize;
-nameEl.style.fontWeight = d.siteNameWeight;
-nameEl.style.color      = d.siteNameColor;
-
-const tagEl = document.getElementById('tag');
-tagEl.style.background   = d.tagBackground;
-tagEl.style.color        = d.tagColor;
-tagEl.style.borderRadius = d.tagRadius;
-tagEl.style.fontFamily   = `'${d.fontBody}', sans-serif`;
-
-/* Date */
+/* Dates */
 const today = new Date();
-if (d.showDate)
-  document.getElementById('short-date').textContent =
-    today.toLocaleDateString('en-US',{month:'short',day:'numeric'}).toUpperCase();
-if (d.showSiteName)
-  nameEl.textContent = d.siteName;
+document.getElementById('short-date').textContent =
+  today.toLocaleDateString('en-US', { month:'short', day:'numeric' }).toUpperCase();
+document.getElementById('long-date').textContent =
+  today.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
 
-/* Seeded daily pick */
-const day = Math.floor((today - new Date(today.getFullYear(),0,0)) / 86400000);
-function seeded(s){ return ()=>{ s=(s*1664525+1013904223)&0xffffffff; return (s>>>0)/0xffffffff; }; }
-const rand = seeded(day * 2654435761);
+/* Daily entry — seeded by day of year */
+const doy  = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 86400000);
+function seeded(s) { return () => { s=(s*1664525+1013904223)&0xffffffff; return (s>>>0)/0xffffffff; }; }
+const rand = seeded(doy * 2654435761);
 const pool = [...entries];
-for(let i=pool.length-1;i>0;i--){ const j=Math.floor(rand()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]]; }
-const entry = pool[day % pool.length];
+for (let i=pool.length-1; i>0; i--) {
+  const j = Math.floor(rand()*(i+1));
+  [pool[i], pool[j]] = [pool[j], pool[i]];
+}
+const entry = pool[doy % pool.length];
 
-document.getElementById('img').src = entry.image;
-document.getElementById('img').alt = entry.label || '';
-capEl.textContent = entry.caption;
-dateEl.textContent = today.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+document.getElementById('card-img').src = entry.image;
+document.getElementById('card-img').alt = entry.label || '';
+document.getElementById('card-caption').textContent = entry.caption;
 
-if (entry.label && d.showTag) tagEl.textContent = entry.label;
+if (D.showCardNumber) {
+  document.getElementById('card-number').textContent =
+    `No. ${String(doy).padStart(3,'0')} / 365`;
+}
+
+/* Tag badge */
+const tagEl = document.getElementById('card-tag');
+if (D.showTag && entry.label) tagEl.textContent = entry.label;
 else tagEl.style.display = 'none';
+
+/* Card back image */
+const backImg     = document.getElementById('card-back-img');
+const backPattern = document.getElementById('card-back-pattern');
+if (D.cardBackImage) {
+  backImg.src               = D.cardBackImage;
+  backImg.style.display     = 'block';
+  backPattern.style.display = 'none';
+} else {
+  backImg.style.display     = 'none';
+  backPattern.style.display = 'flex';
+}
+
+/* Smooth card flip */
+const animStage = document.getElementById('anim-stage');
+const cardFlip  = document.getElementById('card-flip');
+const cardInner = document.getElementById('card-inner');
+const flash     = document.getElementById('flash');
+let opened = false;
+
+document.getElementById('pokeball').addEventListener('click', () => {
+  if (opened) return;
+  opened = true;
+
+  flash.classList.add('go');
+  setTimeout(() => flash.classList.remove('go'), 120);
+
+  setTimeout(() => {
+    animStage.classList.add('out');
+    setTimeout(() => {
+      animStage.style.display = 'none';
+      cardFlip.classList.add('visible');
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        cardInner.style.transition = 'transform 0.75s cubic-bezier(0.4, 0.0, 0.2, 1)';
+        cardInner.style.transform  = 'rotateY(0deg)';
+      }));
+    }, 360);
+  }, 100);
+});
 </script>
 </body>
 </html>
