@@ -11,9 +11,20 @@
 
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { width: 100%; height: 100%; }
 
+/* ── iPhone full-screen fix ─────────────────────────────────────
+   -webkit-fill-available makes iOS Safari fill the REAL screen
+   height including the area behind the address bar.
+──────────────────────────────────────────────────────────────── */
+html {
+  width: 100%;
+  height: 100%;
+  height: -webkit-fill-available;
+}
 body {
+  width: 100%;
+  height: 100%;
+  min-height: -webkit-fill-available;
   position: fixed;
   inset: 0;
   display: flex;
@@ -22,6 +33,10 @@ body {
   justify-content: center;
   padding: max(1.5rem, env(safe-area-inset-top)) 1.25rem max(1.5rem, env(safe-area-inset-bottom));
   overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
 }
 
 .scene {
@@ -367,7 +382,7 @@ const entries = [
   { image:"img3.jpg",  caption:"I love your nerdy ass hobbies.", label:"💛" },
   { image:"img4.jpg",  caption:"I love your corny compliments...", label:"💛" },
   { image:"img5.jpg",  caption:"I love your hands. Basically my hands.", label:"💛" },
-  { image:"img6.jpeg",  caption:"I love your natural scent.", label:"💛" },
+  { image:"img6.jpg",  caption:"I love your natural scent.", label:"💛" },
   { image:"img7.jpg",  caption:"I love yourrr hairrr!", label:"💛" },
   { image:"img8.jpg",  caption:"I love your pretty pretty eyes!", label:"💛" },
   { image:"img9.jpg",  caption:"I love the way you carry yourself.", label:"💛" },
@@ -496,6 +511,7 @@ R.style.setProperty('--tag-bg',                  D.tagBg);
 R.style.setProperty('--tag-color',               D.tagColor);
 R.style.setProperty('--tag-size',                D.tagSize);
 
+/* Page background */
 document.body.style.background = D.pageBg;
 document.body.style.color      = D.textColor;
 if (D.pageImage) {
@@ -545,15 +561,12 @@ document.getElementById('short-date').textContent =
 document.getElementById('long-date').textContent =
   today.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
 
-const doy  = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 86400000);
-function seeded(s) { return () => { s=(s*1664525+1013904223)&0xffffffff; return (s>>>0)/0xffffffff; }; }
-const rand = seeded(doy * 2654435761);
-const pool = [...entries];
-for (let i=pool.length-1; i>0; i--) {
-  const j = Math.floor(rand()*(i+1));
-  [pool[i], pool[j]] = [pool[j], pool[i]];
-}
-const entry = pool[doy % pool.length];
+/* ── Card index: starts at 0 (card 1) on April 25 2026, +1 each day ── */
+const START_DATE  = new Date('2026-04-25');
+const msPerDay    = 86400000;
+const dayIndex    = Math.max(0, Math.floor((today - START_DATE) / msPerDay));
+const entryIndex  = dayIndex % entries.length;
+const entry       = entries[entryIndex];
 
 document.getElementById('card-img').src = entry.image;
 document.getElementById('card-img').alt = entry.label || '';
@@ -561,7 +574,7 @@ document.getElementById('card-caption').textContent = entry.caption;
 
 if (D.showCardNumber)
   document.getElementById('card-number').textContent =
-    `No. ${String((doy % entries.length) + 1).padStart(3,'0')} / ${entries.length}`;
+    `No. ${String(entryIndex + 1).padStart(3,'0')} / ${entries.length}`;
 
 const tagEl = document.getElementById('card-tag');
 if (D.showTag && entry.label) tagEl.textContent = entry.label;
