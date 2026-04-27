@@ -553,7 +553,7 @@ document.getElementById('long-date').textContent =
   today.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
 
 /* ── starts at card 1 on April 25 2026, increments every day ── */
-const START_DATE = new Date('2026-04-25');
+const START_DATE = new Date('2026-04-26');
 const dayIndex   = Math.max(0, Math.floor((today - START_DATE) / 86400000));
 const entryIndex = dayIndex % entries.length;
 const entry      = entries[entryIndex];
